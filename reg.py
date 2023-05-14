@@ -1,28 +1,60 @@
-import copy
+import torch
+from PIL import Image
+# import requests
 import numpy as np
-import open3d as o3
-from probreg import cpd
+# import matplotlib.pyplot as plt
+# from google.colab import files
 
-# load source and target point cloud
-source = o3.io.read_point_cloud('points0.pcd')
-source.remove_non_finite_points()
-target = copy.deepcopy(source)
-# transform target point cloud
-th = np.deg2rad(30.0)
-target.transform(np.array([[np.cos(th), -np.sin(th), 0.0, 0.0],
-                           [np.sin(th), np.cos(th), 0.0, 0.0],
-                           [0.0, 0.0, 1.0, 0.0],
-                           [0.0, 0.0, 0.0, 1.0]]))
-source = source.voxel_down_sample(voxel_size=0.0000005)
-target = target.voxel_down_sample(voxel_size=0.0000005)
+from os import listdir
+import open3d as o3d
+import io
 
-# compute cpd registration
-tf_param, _, _ = cpd.registration_cpd(source, target)
-result = copy.deepcopy(source)
-result.points = tf_param.transform(result.points)
 
-# draw result
-source.paint_uniform_color([1, 0, 0])
-target.paint_uniform_color([0, 1, 0])
-result.paint_uniform_color([0, 0, 1])
-o3.visualization.draw_geometries([source, target, result])
+def loadImages(path):
+    # return array of images
+
+    imagesList = listdir(path)
+    loadedImages = []
+    for image in imagesList:
+        img = Image.open(path + image)
+        loadedImages.append(img)
+
+    return loadedImages
+
+
+
+
+midas_type = "DPT_Large"
+
+model = torch.hub.load("intel-isl/MiDaS", midas_type)
+gpu_device = torch.device('cpu')
+model.to(gpu_device)
+model.eval()
+
+transform = torch.hub.load('intel-isl/MiDaS', 'transforms').dpt_transform
+
+def estimate_depth(image):
+    transformed_image = transform(image).to(gpu_device)
+    
+    with torch.no_grad():
+        prediction = model(transformed_image)
+        
+        prediction = torch.nn.functional.interpolate(
+            prediction.unsqueeze(1),
+            size=image.shape[:2],
+            mode="bicubic",
+            align_corners=False,
+        ).squeeze()
+    
+    output = prediction.cpu().numpy()
+    return output
+
+path = "test_images/"
+
+selected_images = loadImages(path)
+for i in range(len(selected_images[:1])):
+  image = o3d.io.read_image(selected_images[i])
+  output = estimate_depth(image)
+  print(f"Output of image {i} generated")
+  Image.fromarray(image.astype('uint8'), 'RGB').save(f'output_color/{i}_color.png')
+  Image.fromarray(output.astype('uint8'), 'L').save(f'output_depth/{i}_depth.png')

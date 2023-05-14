@@ -1,3 +1,4 @@
+
 import glob
 import numpy as np
 import open3d as o3d
@@ -6,7 +7,6 @@ import open3d.visualization.rendering as rendering
 import os
 import platform
 import sys
-import glob
 
 isMacOS = (platform.system() == "Darwin")
 
@@ -181,7 +181,6 @@ class Settings:
 class AppWindow:
     MENU_OPEN = 1
     MENU_EXPORT = 2
-    MENU_IMAGE = 4
     MENU_QUIT = 3
     MENU_SHOW_SETTINGS = 11
     MENU_ABOUT = 21
@@ -415,7 +414,6 @@ class AppWindow:
             file_menu = gui.Menu()
             file_menu.add_item("Open...", AppWindow.MENU_OPEN)
             file_menu.add_item("Export Current Image...", AppWindow.MENU_EXPORT)
-            file_menu.add_item("Open Images...", AppWindow.MENU_IMAGE)
             if not isMacOS:
                 file_menu.add_separator()
                 file_menu.add_item("Quit", AppWindow.MENU_QUIT)
@@ -454,7 +452,6 @@ class AppWindow:
                                      self._on_menu_toggle_settings_panel)
         w.set_on_menu_item_activated(AppWindow.MENU_ABOUT, self._on_menu_about)
         # ----
-        w.set_on_menu_item_activated(AppWindow.MENU_IMAGE, self._on_menu_open_images)
 
         self._apply_settings()
 
@@ -636,19 +633,6 @@ class AppWindow:
         dlg.set_on_cancel(self._on_file_dialog_cancel)
         dlg.set_on_done(self._on_load_dialog_done)
         self.window.show_dialog(dlg)
-    def _on_menu_open_images(self):
-        dlg = gui.FileDialog(gui.FileDialog.OPEN_DIR, "Choose file to load",
-                             self.window.theme)
-        dlg.add_filter(
-            ".png .jpg .jpeg",
-            "Image Files (.png, .jpg, .jpeg)")
-        dlg.add_filter("", "All files")
-
-        # A file dialog MUST define on_cancel and on_done functions
-        dlg.set_on_cancel(self._on_file_dialog_cancel)
-        dlg.set_on_done(self._on_load_dialog_done_images)
-        self.window.show_dialog(dlg)
-
 
     def _on_file_dialog_cancel(self):
         self.window.close_dialog()
@@ -656,9 +640,6 @@ class AppWindow:
     def _on_load_dialog_done(self, filename):
         self.window.close_dialog()
         self.load(filename)
-    def _on_load_dialog_done_images(self, filename):
-        self.window.close_dialog()
-        self.load_images(filename)
 
     def _on_menu_export(self):
         dlg = gui.FileDialog(gui.FileDialog.SAVE, "Choose file to save",
@@ -752,26 +733,6 @@ class AppWindow:
             except Exception as e:
                 print(e)
 
-    def load_images(self, path):
-        # self._scene.scene.clear_geometry()
-        print(path)
-        # depth_raw = o3d.io.read_image(path)
-        # depth = o3d.geometry.Image(depth_raw)
-        # print(depth)
-        
-        image_list = []
-        # [Image.open(item) for i in  for item in i]
-        print([glob.glob(path+'/*.%s' % ext) for ext in ["jpg","gif","png","tga"]])
-        for i in [glob.glob(path+'/*.%s' % ext) for ext in ["jpg","gif","png","tga"]]: #assuming gif
-            for filename in i:
-                print(filename)
-                try:
-                    im=o3d.io.read_image(filename)                
-                    image_list.append(im)
-                except:
-                    print("some error")
-
-        print('kill me',len(image_list))
     def export_image(self, path, width, height):
 
         def on_image(image):

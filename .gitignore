@@ -1,2 +1,4 @@
 *.pcd
 *.ply
+output_color/
+output_*/

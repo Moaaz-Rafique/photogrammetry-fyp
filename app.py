@@ -7,6 +7,8 @@ import os
 import platform
 import sys
 import glob
+from generateImagesFromModel import generateImages
+
 
 isMacOS = (platform.system() == "Darwin")
 
@@ -759,19 +761,8 @@ class AppWindow:
         # depth = o3d.geometry.Image(depth_raw)
         # print(depth)
         
-        image_list = []
-        # [Image.open(item) for i in  for item in i]
-        print([glob.glob(path+'/*.%s' % ext) for ext in ["jpg","gif","png","tga"]])
-        for i in [glob.glob(path+'/*.%s' % ext) for ext in ["jpg","gif","png","tga"]]: #assuming gif
-            for filename in i:
-                print(filename)
-                try:
-                    im=o3d.io.read_image(filename)                
-                    image_list.append(im)
-                except:
-                    print("some error")
-
-        print('kill me',len(image_list))
+        image_list = []       
+        generateImages(path)
     def export_image(self, path, width, height):
 
         def on_image(image):

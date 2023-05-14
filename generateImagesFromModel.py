@@ -6,18 +6,26 @@ import numpy as np
 # from google.colab import files
 
 from os import listdir
-import open3d as o3d
+# import open3d as o3d
 import io
+import os
+cwd = os.getcwd()
 
-
+# print(cwd)
 def loadImages(path):
     # return array of images
 
     imagesList = listdir(path)
     loadedImages = []
     for image in imagesList:
-        img = Image.open(path + image)
-        loadedImages.append(img)
+        print('loading images', path +'/'+ image)
+        try:
+            img = Image.open(path +'/'+ image)
+            loadedImages.append(img)
+        except Exception as e:
+            print(e)
+
+
 
     return loadedImages
 
@@ -49,12 +57,18 @@ def estimate_depth(image):
     output = prediction.cpu().numpy()
     return output
 
-path = "test_images/"
+# path = "test_images/"
+def generateImages(path):
+    print(path)
+    selected_images = loadImages(path)
+    print(f'loaded {len(selected_images)} in the current directory.')
+    for i in range(len(selected_images[:1])):
+        try:
+            image = np.array(selected_images[i])
+            output = estimate_depth(image)
+            Image.fromarray(image.astype('uint8'), 'RGB').save(f'{cwd}/output_color/{i}_color.png')
+            Image.fromarray(output.astype('uint8'), 'L').save(f'{cwd}./output_depth/{i}_depth.png')
+            print(f"Output of image {i} generated")
+        except Exception as e:
+            print(e)
 
-selected_images = loadImages(path)
-for i in range(len(selected_images[:1])):
-  image = o3d.io.read_image(selected_images[i])
-  output = estimate_depth(image)
-  print(f"Output of image {i} generated")
-  Image.fromarray(image.astype('uint8'), 'RGB').save(f'output_color/{i}_color.png')
-  Image.fromarray(output.astype('uint8'), 'L').save(f'output_depth/{i}_depth.png')

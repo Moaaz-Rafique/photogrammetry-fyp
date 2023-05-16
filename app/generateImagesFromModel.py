@@ -32,30 +32,30 @@ def loadImages(path):
 
 
 
-midas_type = "DPT_Large"
+# midas_type = "DPT_Large"
 
-model = torch.hub.load("intel-isl/MiDaS", midas_type)
-gpu_device = torch.device('cpu')
-model.to(gpu_device)
-model.eval()
+# model = torch.hub.load("intel-isl/MiDaS", midas_type)
+# gpu_device = torch.device('cpu')
+# model.to(gpu_device)
+# model.eval()
 
-transform = torch.hub.load('intel-isl/MiDaS', 'transforms').dpt_transform
+# transform = torch.hub.load('intel-isl/MiDaS', 'transforms').dpt_transform
 
 def estimate_depth(image):
-    transformed_image = transform(image).to(gpu_device)
-    
-    with torch.no_grad():
-        prediction = model(transformed_image)
+    # transformed_image = transform(image).to(gpu_device)
+    print("sdf")
+#     with torch.no_grad():
+#         prediction = model(transformed_image)
         
-        prediction = torch.nn.functional.interpolate(
-            prediction.unsqueeze(1),
-            size=image.shape[:2],
-            mode="bicubic",
-            align_corners=False,
-        ).squeeze()
+#         prediction = torch.nn.functional.interpolate(
+#             prediction.unsqueeze(1),
+#             size=image.shape[:2],
+#             mode="bicubic",
+#             align_corners=False,
+#         ).squeeze()
     
-    output = prediction.cpu().numpy()
-    return output
+#     output = prediction.cpu().numpy()
+#     return output
 
 # path = "test_images/"
 def generateImages(path):

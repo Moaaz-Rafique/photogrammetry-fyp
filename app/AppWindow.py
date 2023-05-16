@@ -8,177 +8,10 @@ import platform
 import sys
 import glob
 from generateImagesFromModel import generateImages
-
+import app1
+from Settings import Settings
 
 isMacOS = (platform.system() == "Darwin")
-
-
-class Settings:
-    UNLIT = "defaultUnlit"
-    LIT = "defaultLit"
-    NORMALS = "normals"
-    DEPTH = "depth"
-
-    DEFAULT_PROFILE_NAME = "Bright day with sun at +Y [default]"
-    POINT_CLOUD_PROFILE_NAME = "Cloudy day (no direct sun)"
-    CUSTOM_PROFILE_NAME = "Custom"
-    LIGHTING_PROFILES = {
-        DEFAULT_PROFILE_NAME: {
-            "ibl_intensity": 45000,
-            "sun_intensity": 45000,
-            "sun_dir": [0.577, -0.577, -0.577],
-            # "ibl_rotation":
-            "use_ibl": True,
-            "use_sun": True,
-        },
-        "Bright day with sun at -Y": {
-            "ibl_intensity": 45000,
-            "sun_intensity": 45000,
-            "sun_dir": [0.577, 0.577, 0.577],
-            # "ibl_rotation":
-            "use_ibl": True,
-            "use_sun": True,
-        },
-        "Bright day with sun at +Z": {
-            "ibl_intensity": 45000,
-            "sun_intensity": 45000,
-            "sun_dir": [0.577, 0.577, -0.577],
-            # "ibl_rotation":
-            "use_ibl": True,
-            "use_sun": True,
-        },
-        "Less Bright day with sun at +Y": {
-            "ibl_intensity": 35000,
-            "sun_intensity": 50000,
-            "sun_dir": [0.577, -0.577, -0.577],
-            # "ibl_rotation":
-            "use_ibl": True,
-            "use_sun": True,
-        },
-        "Less Bright day with sun at -Y": {
-            "ibl_intensity": 35000,
-            "sun_intensity": 50000,
-            "sun_dir": [0.577, 0.577, 0.577],
-            # "ibl_rotation":
-            "use_ibl": True,
-            "use_sun": True,
-        },
-        "Less Bright day with sun at +Z": {
-            "ibl_intensity": 35000,
-            "sun_intensity": 50000,
-            "sun_dir": [0.577, 0.577, -0.577],
-            # "ibl_rotation":
-            "use_ibl": True,
-            "use_sun": True,
-        },
-        POINT_CLOUD_PROFILE_NAME: {
-            "ibl_intensity": 60000,
-            "sun_intensity": 50000,
-            "use_ibl": True,
-            "use_sun": False,
-            # "ibl_rotation":
-        },
-    }
-
-    DEFAULT_MATERIAL_NAME = "Polished ceramic [default]"
-    PREFAB = {
-        DEFAULT_MATERIAL_NAME: {
-            "metallic": 0.0,
-            "roughness": 0.7,
-            "reflectance": 0.5,
-            "clearcoat": 0.2,
-            "clearcoat_roughness": 0.2,
-            "anisotropy": 0.0
-        },
-        "Metal (rougher)": {
-            "metallic": 1.0,
-            "roughness": 0.5,
-            "reflectance": 0.9,
-            "clearcoat": 0.0,
-            "clearcoat_roughness": 0.0,
-            "anisotropy": 0.0
-        },
-        "Metal (smoother)": {
-            "metallic": 1.0,
-            "roughness": 0.3,
-            "reflectance": 0.9,
-            "clearcoat": 0.0,
-            "clearcoat_roughness": 0.0,
-            "anisotropy": 0.0
-        },
-        "Plastic": {
-            "metallic": 0.0,
-            "roughness": 0.5,
-            "reflectance": 0.5,
-            "clearcoat": 0.5,
-            "clearcoat_roughness": 0.2,
-            "anisotropy": 0.0
-        },
-        "Glazed ceramic": {
-            "metallic": 0.0,
-            "roughness": 0.5,
-            "reflectance": 0.9,
-            "clearcoat": 1.0,
-            "clearcoat_roughness": 0.1,
-            "anisotropy": 0.0
-        },
-        "Clay": {
-            "metallic": 0.0,
-            "roughness": 1.0,
-            "reflectance": 0.5,
-            "clearcoat": 0.1,
-            "clearcoat_roughness": 0.287,
-            "anisotropy": 0.0
-        },
-    }
-
-    def __init__(self):
-        self.mouse_model = gui.SceneWidget.Controls.ROTATE_CAMERA
-        self.bg_color = gui.Color(1, 1, 1)
-        self.show_skybox = False
-        self.show_axes = False
-        self.use_ibl = True
-        self.use_sun = True
-        self.new_ibl_name = None  # clear to None after loading
-        self.ibl_intensity = 45000
-        self.sun_intensity = 45000
-        self.sun_dir = [0.577, -0.577, -0.577]
-        self.sun_color = gui.Color(1, 1, 1)
-
-        self.apply_material = True  # clear to False after processing
-        self._materials = {
-            Settings.LIT: rendering.MaterialRecord(),
-            Settings.UNLIT: rendering.MaterialRecord(),
-            Settings.NORMALS: rendering.MaterialRecord(),
-            Settings.DEPTH: rendering.MaterialRecord()
-        }
-        self._materials[Settings.LIT].base_color = [0.9, 0.9, 0.9, 1.0]
-        self._materials[Settings.LIT].shader = Settings.LIT
-        self._materials[Settings.UNLIT].base_color = [0.9, 0.9, 0.9, 1.0]
-        self._materials[Settings.UNLIT].shader = Settings.UNLIT
-        self._materials[Settings.NORMALS].shader = Settings.NORMALS
-        self._materials[Settings.DEPTH].shader = Settings.DEPTH
-
-        # Conveniently, assigning from self._materials[...] assigns a reference,
-        # not a copy, so if we change the property of a material, then switch
-        # to another one, then come back, the old setting will still be there.
-        self.material = self._materials[Settings.LIT]
-
-    def set_material(self, name):
-        self.material = self._materials[name]
-        self.apply_material = True
-
-    def apply_material_prefab(self, name):
-        assert (self.material.shader == Settings.LIT)
-        prefab = Settings.PREFAB[name]
-        for key, val in prefab.items():
-            setattr(self.material, "base_" + key, val)
-
-    def apply_lighting_profile(self, name):
-        profile = Settings.LIGHTING_PROFILES[name]
-        for key, val in profile.items():
-            setattr(self, key, val)
-
 
 class AppWindow:
     MENU_OPEN = 1
@@ -460,52 +293,57 @@ class AppWindow:
 
         self._apply_settings()
 
-    def _apply_settings(self):
-        bg_color = [
-            self.settings.bg_color.red, self.settings.bg_color.green,
-            self.settings.bg_color.blue, self.settings.bg_color.alpha
-        ]
-        self._scene.scene.set_background(bg_color)
-        self._scene.scene.show_skybox(self.settings.show_skybox)
-        self._scene.scene.show_axes(self.settings.show_axes)
-        if self.settings.new_ibl_name is not None:
-            self._scene.scene.scene.set_indirect_light(
-                self.settings.new_ibl_name)
-            # Clear new_ibl_name, so we don't keep reloading this image every
-            # time the settings are applied.
-            self.settings.new_ibl_name = None
-        self._scene.scene.scene.enable_indirect_light(self.settings.use_ibl)
-        self._scene.scene.scene.set_indirect_light_intensity(
-            self.settings.ibl_intensity)
-        sun_color = [
-            self.settings.sun_color.red, self.settings.sun_color.green,
-            self.settings.sun_color.blue
-        ]
-        self._scene.scene.scene.set_sun_light(self.settings.sun_dir, sun_color,
-                                              self.settings.sun_intensity)
-        self._scene.scene.scene.enable_sun_light(self.settings.use_sun)
+    # def _apply_settings(self):
 
-        if self.settings.apply_material:
-            self._scene.scene.update_material(self.settings.material)
-            self.settings.apply_material = False
+    #     bg_color = [
+    #         self.settings.bg_color.red, self.settings.bg_color.green,
+    #         self.settings.bg_color.blue, self.settings.bg_color.alpha
+    #     ]
+    #     self._scene.scene.set_background(bg_color)
+    #     self._scene.scene.show_skybox(self.settings.show_skybox)
+    #     self._scene.scene.show_axes(self.settings.show_axes)
+    #     if self.settings.new_ibl_name is not None:
+    #         self._scene.scene.scene.set_indirect_light(
+    #             self.settings.new_ibl_name)
+    #         # Clear new_ibl_name, so we don't keep reloading this image every
+    #         # time the settings are applied.
+    #         self.settings.new_ibl_name = None
+    #     self._scene.scene.scene.enable_indirect_light(self.settings.use_ibl)
+    #     self._scene.scene.scene.set_indirect_light_intensity(
+    #         self.settings.ibl_intensity)
+    #     sun_color = [
+    #         self.settings.sun_color.red, self.settings.sun_color.green,
+    #         self.settings.sun_color.blue
+    #     ]
+    #     self._scene.scene.scene.set_sun_light(self.settings.sun_dir, sun_color,
+    #                                           self.settings.sun_intensity)
+    #     self._scene.scene.scene.enable_sun_light(self.settings.use_sun)
 
-        self._bg_color.color_value = self.settings.bg_color
-        self._show_skybox.checked = self.settings.show_skybox
-        self._show_axes.checked = self.settings.show_axes
-        self._use_ibl.checked = self.settings.use_ibl
-        self._use_sun.checked = self.settings.use_sun
-        self._ibl_intensity.int_value = self.settings.ibl_intensity
-        self._sun_intensity.int_value = self.settings.sun_intensity
-        self._sun_dir.vector_value = self.settings.sun_dir
-        self._sun_color.color_value = self.settings.sun_color
-        self._material_prefab.enabled = (
-            self.settings.material.shader == Settings.LIT)
-        c = gui.Color(self.settings.material.base_color[0],
-                      self.settings.material.base_color[1],
-                      self.settings.material.base_color[2],
-                      self.settings.material.base_color[3])
-        self._material_color.color_value = c
-        self._point_size.double_value = self.settings.material.point_size
+    #     if self.settings.apply_material:
+    #         self._scene.scene.update_material(self.settings.material)
+    #         self.settings.apply_material = False
+
+    #     self._bg_color.color_value = self.settings.bg_color
+    #     self._show_skybox.checked = self.settings.show_skybox
+    #     self._show_axes.checked = self.settings.show_axes
+    #     self._use_ibl.checked = self.settings.use_ibl
+    #     self._use_sun.checked = self.settings.use_sun
+    #     self._ibl_intensity.int_value = self.settings.ibl_intensity
+    #     self._sun_intensity.int_value = self.settings.sun_intensity
+    #     self._sun_dir.vector_value = self.settings.sun_dir
+    #     self._sun_color.color_value = self.settings.sun_color
+    #     self._material_prefab.enabled = (
+    #         self.settings.material.shader == Settings.LIT)
+    #     c = gui.Color(self.settings.material.base_color[0],
+    #                   self.settings.material.base_color[1],
+    #                   self.settings.material.base_color[2],
+    #                   self.settings.material.base_color[3])
+    #     self._material_color.color_value = c
+    #     self._point_size.double_value = self.settings.material.point_size
+
+
+    
+    from applysettings import _apply_settings
 
     def _on_layout(self, layout_context):
         # The on_layout callback should set the frame (position + size) of every
@@ -521,21 +359,27 @@ class AppWindow:
         self._settings_panel.frame = gui.Rect(r.get_right() - width, r.y, width,
                                               height)
 
-    def _set_mouse_mode_rotate(self):
-        self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_CAMERA)
+    # def _set_mouse_mode_rotate(self):
+    #     self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_CAMERA)
 
-    def _set_mouse_mode_fly(self):
-        self._scene.set_view_controls(gui.SceneWidget.Controls.FLY)
+    # def _set_mouse_mode_fly(self):
+    #     self._scene.set_view_controls(gui.SceneWidget.Controls.FLY)
 
-    def _set_mouse_mode_sun(self):
-        self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_SUN)
+    # def _set_mouse_mode_sun(self):
+    #     self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_SUN)
 
-    def _set_mouse_mode_ibl(self):
-        self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_IBL)
+    # def _set_mouse_mode_ibl(self):
+    #     self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_IBL)
 
-    def _set_mouse_mode_model(self):
-        self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_MODEL)
+    # def _set_mouse_mode_model(self):
+    #     self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_MODEL)
 
+    from mousemode import _set_mouse_mode_rotate
+    from mousemode import _set_mouse_mode_fly
+    from mousemode import _set_mouse_mode_sun
+    from mousemode import _set_mouse_mode_ibl
+    from mousemode import _set_mouse_mode_model    
+    
     def _on_bg_color(self, new_color):
         self.settings.bg_color = new_color
         self._apply_settings()
@@ -754,46 +598,28 @@ class AppWindow:
             except Exception as e:
                 print(e)
 
-    def load_images(self, path):
-        # self._scene.scene.clear_geometry()
-        print(path)
-        # depth_raw = o3d.io.read_image(path)
-        # depth = o3d.geometry.Image(depth_raw)
-        # print(depth)
+    from imagefunctions import export_image
+    from imagefunctions import load_images
+
+
+    # def load_images(self, path):
+    #     # self._scene.scene.clear_geometry()
+    #     print(path)
+    #     # depth_raw = o3d.io.read_image(path)
+    #     # depth = o3d.geometry.Image(depth_raw)
+    #     # print(depth)
         
-        image_list = []       
-        generateImages(path)
-    def export_image(self, path, width, height):
+    #     image_list = []       
+    #     generateImages(path)
+    # def export_image(self, path, width, height):
 
-        def on_image(image):
-            img = image
+    #     def on_image(image):
+    #         img = image
 
-            quality = 9  # png
-            if path.endswith(".jpg"):
-                quality = 100
-            o3d.io.write_image(path, img, quality)
+    #         quality = 9  # png
+    #         if path.endswith(".jpg"):
+    #             quality = 100
+    #         o3d.io.write_image(path, img, quality)
 
-        self._scene.scene.scene.render_to_image(on_image)
+    #     self._scene.scene.scene.render_to_image(on_image)
 
-
-def main():
-    # We need to initialize the application, which finds the necessary shaders
-    # for rendering and prepares the cross-platform window abstraction.
-    gui.Application.instance.initialize()
-
-    w = AppWindow(1024, 768)
-
-    if len(sys.argv) > 1:
-        path = sys.argv[1]
-        if os.path.exists(path):
-            w.load(path)
-        else:
-            w.window.show_message_box("Error",
-                                      "Could not open file '" + path + "'")
-
-    # Run the event loop. This will not return until the last window is closed.
-    gui.Application.instance.run()
-
-
-if __name__ == "__main__":
-    main()

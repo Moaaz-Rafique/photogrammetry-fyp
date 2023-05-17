@@ -1,15 +1,4 @@
-import glob
-import numpy as np
-import open3d as o3d
 import open3d.visualization.gui as gui
-import open3d.visualization.rendering as rendering
-import os
-import platform
-import sys
-import glob
-from generateImagesFromModel import generateImages
-import app1
-from Settings import Settings
 
 
 def _set_mouse_mode_rotate(self):

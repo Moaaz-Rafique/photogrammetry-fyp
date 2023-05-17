@@ -7,9 +7,6 @@ import os
 import platform
 import sys
 import glob
-from generateImagesFromModel import generateImages
-import app1
-from Settings import Settings
 from AppWindow import AppWindow
 
 isMacOS = (platform.system() == "Darwin")

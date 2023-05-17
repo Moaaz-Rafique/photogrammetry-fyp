@@ -5,10 +5,8 @@ import open3d.visualization.gui as gui
 import open3d.visualization.rendering as rendering
 import os
 import platform
-import sys
 import glob
-from generateImagesFromModel import generateImages
-import app1
+# from generateImagesFromModel import generateImages
 from Settings import Settings
 
 isMacOS = (platform.system() == "Darwin")
@@ -359,19 +357,6 @@ class AppWindow:
         self._settings_panel.frame = gui.Rect(r.get_right() - width, r.y, width,
                                               height)
 
-    # def _set_mouse_mode_rotate(self):
-    #     self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_CAMERA)
-
-    # def _set_mouse_mode_fly(self):
-    #     self._scene.set_view_controls(gui.SceneWidget.Controls.FLY)
-
-    # def _set_mouse_mode_sun(self):
-    #     self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_SUN)
-
-    # def _set_mouse_mode_ibl(self):
-    #     self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_IBL)
-
-    # def _set_mouse_mode_model(self):
     #     self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_MODEL)
 
     from mousemode import _set_mouse_mode_rotate
@@ -456,13 +441,13 @@ class AppWindow:
         dlg = gui.FileDialog(gui.FileDialog.OPEN, "Choose file to load",
                              self.window.theme)
         dlg.add_filter(
-            ".ply .stl .fbx .obj .off .gltf .glb",
-            "Triangle mesh files (.ply, .stl, .fbx, .obj, .off, "
-            ".gltf, .glb)")
-        dlg.add_filter(
             ".xyz .xyzn .xyzrgb .ply .pcd .pts",
             "Point cloud files (.xyz, .xyzn, .xyzrgb, .ply, "
             ".pcd, .pts)")
+        dlg.add_filter(
+            ".ply .stl .fbx .obj .off .gltf .glb",
+            "Triangle mesh files (.ply, .stl, .fbx, .obj, .off, "
+            ".gltf, .glb)")
         dlg.add_filter(".ply", "Polygon files (.ply)")
         dlg.add_filter(".stl", "Stereolithography files (.stl)")
         dlg.add_filter(".fbx", "Autodesk Filmbox files (.fbx)")
@@ -483,7 +468,7 @@ class AppWindow:
         dlg.set_on_done(self._on_load_dialog_done)
         self.window.show_dialog(dlg)
     def _on_menu_open_images(self):
-        dlg = gui.FileDialog(gui.FileDialog.OPEN_DIR, "Choose file to load",
+        dlg = gui.FileDialog(gui.FileDialog.OPEN_DIR, "Choose Image Directly...",
                              self.window.theme)
         dlg.add_filter(
             ".png .jpg .jpeg",
@@ -504,6 +489,7 @@ class AppWindow:
         self.load(filename)
     def _on_load_dialog_done_images(self, filename):
         self.window.close_dialog()
+        print('close')
         self.load_images(filename)
 
     def _on_menu_export(self):
@@ -573,14 +559,18 @@ class AppWindow:
             cloud = None
             try:
                 cloud = o3d.io.read_point_cloud(path)
-            except Exception:
+            except  Exception as e:
+                print('loading error',e)
                 pass
             if cloud is not None:
                 print("[Info] Successfully read", path)
-                if not cloud.has_normals():
-                    cloud.estimate_normals()
-                cloud.normalize_normals()
-                geometry = cloud
+                try:
+                    if not cloud.has_normals():
+                        cloud.estimate_normals()
+                    cloud.normalize_normals()
+                    geometry = cloud
+                except Exception as e:
+                    print('loading error',e)
             else:
                 print("[WARNING] Failed to read points", path)
 
@@ -597,29 +587,10 @@ class AppWindow:
                 self._scene.setup_camera(60, bounds, bounds.get_center())
             except Exception as e:
                 print(e)
+    
+    def _on_dialog_ok(self):
+            self.window.close_dialog()
 
     from imagefunctions import export_image
     from imagefunctions import load_images
-
-
-    # def load_images(self, path):
-    #     # self._scene.scene.clear_geometry()
-    #     print(path)
-    #     # depth_raw = o3d.io.read_image(path)
-    #     # depth = o3d.geometry.Image(depth_raw)
-    #     # print(depth)
-        
-    #     image_list = []       
-    #     generateImages(path)
-    # def export_image(self, path, width, height):
-
-    #     def on_image(image):
-    #         img = image
-
-    #         quality = 9  # png
-    #         if path.endswith(".jpg"):
-    #             quality = 100
-    #         o3d.io.write_image(path, img, quality)
-
-    #     self._scene.scene.scene.render_to_image(on_image)
-
+    from imagefunctions import show_message_dialog

@@ -9,6 +9,8 @@ from os import listdir
 # import open3d as o3d
 import io
 import os
+import time
+
 cwd = os.getcwd()
 
 # print(cwd)
@@ -32,37 +34,37 @@ def loadImages(path):
 
 
 
-# midas_type = "DPT_Large"
+midas_type = "DPT_Large"
 
-# model = torch.hub.load("intel-isl/MiDaS", midas_type)
-# gpu_device = torch.device('cpu')
-# model.to(gpu_device)
-# model.eval()
+model = torch.hub.load("intel-isl/MiDaS", midas_type)
+gpu_device = torch.device('cpu')
+model.to(gpu_device)
+model.eval()
 
-# transform = torch.hub.load('intel-isl/MiDaS', 'transforms').dpt_transform
+transform = torch.hub.load('intel-isl/MiDaS', 'transforms').dpt_transform
 
 def estimate_depth(image):
-    # transformed_image = transform(image).to(gpu_device)
-    print("sdf")
-#     with torch.no_grad():
-#         prediction = model(transformed_image)
+    transformed_image = transform(image).to(gpu_device)
+    with torch.no_grad():
+        prediction = model(transformed_image)
         
-#         prediction = torch.nn.functional.interpolate(
-#             prediction.unsqueeze(1),
-#             size=image.shape[:2],
-#             mode="bicubic",
-#             align_corners=False,
-#         ).squeeze()
+        prediction = torch.nn.functional.interpolate(
+            prediction.unsqueeze(1),
+            size=image.shape[:2],
+            mode="bicubic",
+            align_corners=False,
+        ).squeeze()
     
-#     output = prediction.cpu().numpy()
-#     return output
+    output = prediction.cpu().numpy()
+    return output
 
-# path = "test_images/"
+path = "test_images/"
 def generateImages(path):
     print(path)
     selected_images = loadImages(path)
     print(f'loaded {len(selected_images)} in the current directory.')
     for i in range(len(selected_images[:1])):
+        time.sleep(1)
         try:
             image = np.array(selected_images[i])
             output = estimate_depth(image)
@@ -72,3 +74,4 @@ def generateImages(path):
         except Exception as e:
             print(e)
 
+# generateImages(path)

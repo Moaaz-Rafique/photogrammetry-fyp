@@ -1,4 +1,8 @@
 *.pcd
 *.ply
-output_color/
+app/output_color/
 output_*/
+*.gltf
+*.png
+*.JPG
+

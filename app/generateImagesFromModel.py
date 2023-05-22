@@ -1,9 +1,6 @@
 import torch
-from PIL import Image
-# import requests
+from PIL import Image, ImageFilter
 import numpy as np
-# import matplotlib.pyplot as plt
-# from google.colab import files
 
 from os import listdir
 # import open3d as o3d
@@ -13,6 +10,7 @@ import time
 
 cwd = os.getcwd()
 
+
 # print(cwd)
 def loadImages(path):
     # return array of images
@@ -20,18 +18,14 @@ def loadImages(path):
     imagesList = listdir(path)
     loadedImages = []
     for image in imagesList:
-        print('loading images', path +'/'+ image)
+        print('loading images', path + '/' + image)
         try:
-            img = Image.open(path +'/'+ image)
+            img = Image.open(path + '/' + image)
             loadedImages.append(img)
         except Exception as e:
             print(e)
 
-
-
     return loadedImages
-
-
 
 
 midas_type = "DPT_Large"
@@ -43,22 +37,26 @@ model.eval()
 
 transform = torch.hub.load('intel-isl/MiDaS', 'transforms').dpt_transform
 
+
 def estimate_depth(image):
     transformed_image = transform(image).to(gpu_device)
     with torch.no_grad():
         prediction = model(transformed_image)
-        
+
         prediction = torch.nn.functional.interpolate(
             prediction.unsqueeze(1),
             size=image.shape[:2],
             mode="bicubic",
             align_corners=False,
         ).squeeze()
-    
+
     output = prediction.cpu().numpy()
     return output
 
-path = "test_images/"
+
+path = "../test_images/"
+
+
 def generateImages(path):
     print(path)
     selected_images = loadImages(path)
@@ -68,8 +66,15 @@ def generateImages(path):
         try:
             image = np.array(selected_images[i])
             output = estimate_depth(image)
-            Image.fromarray(image.astype('uint8'), 'RGB').save(f'{cwd}/output_color/{i}_color.png')
-            Image.fromarray(output.astype('uint8'), 'L').save(f'{cwd}./output_depth/{i}_depth.png')
+            Image.fromarray(image.astype('uint8'), 'RGB').resize((500, 500)).save(f'{cwd}/output_color/{i}_color.png')
+            out_img = Image.fromarray(output.astype('uint8'), 'L').filter(ImageFilter.SMOOTH)
+            out_img = out_img.resize((500, 500))
+            out_img = out_img.filter(ImageFilter.BoxBlur(10))
+            out_img = out_img.filter(ImageFilter.BoxBlur(10))
+            out_img = out_img.filter(ImageFilter.BoxBlur(10))
+            out_img = out_img.filter(ImageFilter.BoxBlur(10))
+            out_img = out_img.filter(ImageFilter.BoxBlur(10))
+            out_img.save(f'{cwd}./output_depth/{i}_depth.png')
             print(f"Output of image {i} generated")
         except Exception as e:
             print(e)

@@ -11,6 +11,7 @@ from Settings import Settings
 
 isMacOS = (platform.system() == "Darwin")
 
+
 class AppWindow:
     MENU_OPEN = 1
     MENU_EXPORT = 2
@@ -41,29 +42,13 @@ class AppWindow:
         self._scene.set_on_sun_direction_changed(self._on_sun_dir)
 
         # ---- Settings panel ----
-        # Rather than specifying sizes in pixels, which may vary in size based
-        # on the monitor, especially on macOS which has 220 dpi monitors, use
-        # the em-size. This way sizings will be proportional to the font size,
-        # which will create a more visually consistent size across platforms.
         em = w.theme.font_size
         separation_height = int(round(0.5 * em))
 
         # Widgets are laid out in layouts: gui.Horiz, gui.Vert,
-        # gui.CollapsableVert, and gui.VGrid. By nesting the layouts we can
-        # achieve complex designs. Usually we use a vertical layout as the
-        # topmost widget, since widgets tend to be organized from top to bottom.
-        # Within that, we usually have a series of horizontal layouts for each
-        # row. All layouts take a spacing parameter, which is the spacing
-        # between items in the widget, and a margins parameter, which specifies
-        # the spacing of the left, top, right, bottom margins. (This acts like
-        # the 'padding' property in CSS.)
         self._settings_panel = gui.Vert(
             0, gui.Margins(0.25 * em, 0.25 * em, 0.25 * em, 0.25 * em))
 
-        # Create a collapsible vertical widget, which takes up enough vertical
-        # space for all its children when open, but only enough for text when
-        # closed. This is useful for property pages, so the user can hide sets
-        # of properties they rarely use.
         view_ctrls = gui.CollapsableVert("View controls", 0.25 * em,
                                          gui.Margins(em, 0, 0, 0))
 
@@ -153,7 +138,6 @@ class AppWindow:
         self._ibl_map = gui.Combobox()
         for ibl in glob.glob(gui.Application.instance.resource_path +
                              "/*_ibl.ktx"):
-
             self._ibl_map.add_item(os.path.basename(ibl[:-8]))
         self._ibl_map.selected_text = AppWindow.DEFAULT_IBL
         self._ibl_map.set_on_selection_changed(self._on_new_ibl)
@@ -291,62 +275,9 @@ class AppWindow:
 
         self._apply_settings()
 
-    # def _apply_settings(self):
-
-    #     bg_color = [
-    #         self.settings.bg_color.red, self.settings.bg_color.green,
-    #         self.settings.bg_color.blue, self.settings.bg_color.alpha
-    #     ]
-    #     self._scene.scene.set_background(bg_color)
-    #     self._scene.scene.show_skybox(self.settings.show_skybox)
-    #     self._scene.scene.show_axes(self.settings.show_axes)
-    #     if self.settings.new_ibl_name is not None:
-    #         self._scene.scene.scene.set_indirect_light(
-    #             self.settings.new_ibl_name)
-    #         # Clear new_ibl_name, so we don't keep reloading this image every
-    #         # time the settings are applied.
-    #         self.settings.new_ibl_name = None
-    #     self._scene.scene.scene.enable_indirect_light(self.settings.use_ibl)
-    #     self._scene.scene.scene.set_indirect_light_intensity(
-    #         self.settings.ibl_intensity)
-    #     sun_color = [
-    #         self.settings.sun_color.red, self.settings.sun_color.green,
-    #         self.settings.sun_color.blue
-    #     ]
-    #     self._scene.scene.scene.set_sun_light(self.settings.sun_dir, sun_color,
-    #                                           self.settings.sun_intensity)
-    #     self._scene.scene.scene.enable_sun_light(self.settings.use_sun)
-
-    #     if self.settings.apply_material:
-    #         self._scene.scene.update_material(self.settings.material)
-    #         self.settings.apply_material = False
-
-    #     self._bg_color.color_value = self.settings.bg_color
-    #     self._show_skybox.checked = self.settings.show_skybox
-    #     self._show_axes.checked = self.settings.show_axes
-    #     self._use_ibl.checked = self.settings.use_ibl
-    #     self._use_sun.checked = self.settings.use_sun
-    #     self._ibl_intensity.int_value = self.settings.ibl_intensity
-    #     self._sun_intensity.int_value = self.settings.sun_intensity
-    #     self._sun_dir.vector_value = self.settings.sun_dir
-    #     self._sun_color.color_value = self.settings.sun_color
-    #     self._material_prefab.enabled = (
-    #         self.settings.material.shader == Settings.LIT)
-    #     c = gui.Color(self.settings.material.base_color[0],
-    #                   self.settings.material.base_color[1],
-    #                   self.settings.material.base_color[2],
-    #                   self.settings.material.base_color[3])
-    #     self._material_color.color_value = c
-    #     self._point_size.double_value = self.settings.material.point_size
-
-
-    
     from applysettings import _apply_settings
 
     def _on_layout(self, layout_context):
-        # The on_layout callback should set the frame (position + size) of every
-        # child correctly. After the callback is done the window will layout
-        # the grandchildren.
         r = self.window.content_rect
         self._scene.frame = r
         width = 17 * layout_context.theme.font_size
@@ -357,14 +288,12 @@ class AppWindow:
         self._settings_panel.frame = gui.Rect(r.get_right() - width, r.y, width,
                                               height)
 
-    #     self._scene.set_view_controls(gui.SceneWidget.Controls.ROTATE_MODEL)
-
     from mousemode import _set_mouse_mode_rotate
     from mousemode import _set_mouse_mode_fly
     from mousemode import _set_mouse_mode_sun
     from mousemode import _set_mouse_mode_ibl
-    from mousemode import _set_mouse_mode_model    
-    
+    from mousemode import _set_mouse_mode_model
+
     def _on_bg_color(self, new_color):
         self.settings.bg_color = new_color
         self._apply_settings()
@@ -467,6 +396,7 @@ class AppWindow:
         dlg.set_on_cancel(self._on_file_dialog_cancel)
         dlg.set_on_done(self._on_load_dialog_done)
         self.window.show_dialog(dlg)
+
     def _on_menu_open_images(self):
         dlg = gui.FileDialog(gui.FileDialog.OPEN_DIR, "Choose Image Directly...",
                              self.window.theme)
@@ -480,16 +410,16 @@ class AppWindow:
         dlg.set_on_done(self._on_load_dialog_done_images)
         self.window.show_dialog(dlg)
 
-
     def _on_file_dialog_cancel(self):
         self.window.close_dialog()
 
     def _on_load_dialog_done(self, filename):
         self.window.close_dialog()
         self.load(filename)
+
     def _on_load_dialog_done_images(self, filename):
-        self.window.close_dialog()
         print('close')
+        self.window.close_dialog()
         self.load_images(filename)
 
     def _on_menu_export(self):
@@ -560,7 +490,7 @@ class AppWindow:
             try:
                 cloud = o3d.io.read_point_cloud(path)
             except  Exception as e:
-                print('loading error',e)
+                print('loading error', e)
                 pass
             if cloud is not None:
                 print("[Info] Successfully read", path)
@@ -570,7 +500,7 @@ class AppWindow:
                     cloud.normalize_normals()
                     geometry = cloud
                 except Exception as e:
-                    print('loading error',e)
+                    print('loading error', e)
             else:
                 print("[WARNING] Failed to read points", path)
 
@@ -587,9 +517,9 @@ class AppWindow:
                 self._scene.setup_camera(60, bounds, bounds.get_center())
             except Exception as e:
                 print(e)
-    
+
     def _on_dialog_ok(self):
-            self.window.close_dialog()
+        self.window.close_dialog()
 
     from imagefunctions import export_image
     from imagefunctions import load_images

@@ -15,8 +15,6 @@ for i_no in range(1):#,72, 5):
 # pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
 
 
-
-pcd = o3d.io.read_point_cloud("points_test_1.ply")
 # pcd = pcd.scale(1000, np.array([[.0],
 #                          [.0],
 #                          [.0]]))
@@ -27,21 +25,25 @@ pcd = o3d.io.read_point_cloud("points_test_1.ply")
 #                                   front=[0.4257, -0.2125, -0.8795],
 #                                   lookat=[0, 0, 0],
 #                                   up=[-0.0694, -0.9768, 0.2024])
-# mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(dpcd, .03)
-# mesh.compute_vertex_normals()
-# # mesh.compute_uvatlas()
+dpcd = pcd.voxel_down_sample(voxel_size=0.01)
+mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(dpcd, .03)
+mesh.compute_vertex_normals()
+# mesh.compute_uvatlas()
 # o3d.visualization.draw_geometries([mesh], mesh_show_back_face=True)
-# # o3d.io.write_point_cloud(f"points_test_1.ply", pcd)
+# o3d.io.write_point_cloud(f"points_test_1.ply", pcd)
 # o3d.io.write_triangle_mesh('mesh2.gltf', mesh)
-pcd.estimate_normals()
+# pcd.estimate_normals()
 
-print('run Poisson surface reconstruction')
-with o3d.utility.VerbosityContextManager(
-        o3d.utility.VerbosityLevel.Debug) as cm:
-    mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-        pcd, depth=9)
-print(mesh)
-o3d.visualization.draw_geometries([mesh, pcd], mesh_show_back_face=False)
+mesh2 = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, (.1, .1))
+
+
+# print('run Poisson surface reconstruction')
+# with o3d.utility.VerbosityContextManager(
+#         o3d.utility.VerbosityLevel.Debug) as cm:
+#     mesh1, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
+#         pcd, depth=9)
+# print(mesh1)
+# o3d.visualization.draw_geometries([mesh1, pcd], mesh_show_back_face=False)
 
 # keypoints = o3d.geometry.keypoint.compute_iss_keypoints(pcd)
 

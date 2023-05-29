@@ -18,6 +18,7 @@ class AppWindow:
     MENU_IMAGE = 4
     MENU_QUIT = 3
     MENU_SHOW_SETTINGS = 11
+    MENU_SHOW_MODEL_SETTINGS = 12
     MENU_ABOUT = 21
 
     DEFAULT_IBL = "default"
@@ -26,6 +27,25 @@ class AppWindow:
     MATERIAL_SHADERS = [
         Settings.LIT, Settings.UNLIT, Settings.NORMALS, Settings.DEPTH
     ]
+
+    def _load_image_click(self):
+        print("image load")
+        try:
+            self._on_menu_open_images()
+        except Exception as e:
+            print(e)
+    def _get_loaded_geometry(self):
+        print("get Images")
+        try:
+            print(type(self._scene.scene))
+            print(self._scene.scene.has_geometry('__model0__'))
+            if self._scene.scene.has_geometry('__model0__'):
+                print("found Model")
+            else:
+                self.show_message_dialog("Error", "Not a valid model")
+        except Exception as e:
+            print(e)
+
 
     def __init__(self, width, height):
         self.settings = Settings()
@@ -48,9 +68,23 @@ class AppWindow:
         # Widgets are laid out in layouts: gui.Horiz, gui.Vert,
         self._settings_panel = gui.Vert(
             0, gui.Margins(0.25 * em, 0.25 * em, 0.25 * em, 0.25 * em))
+        self._model_settings_panel = gui.Vert(
+            0, gui.Margins(0.25 * em, 0.25 * em, 0.25 * em, 0.25 * em))
+
+        model_ctrls = gui.CollapsableVert("Model controls", 0.25 * em,
+                                          gui.Margins(em, 0, 0, 0))
 
         view_ctrls = gui.CollapsableVert("View controls", 0.25 * em,
                                          gui.Margins(em, 0, 0, 0))
+        self._load_images_btn = gui.Button("Load Images")
+        self._load_images_btn.horizontal_padding_em = 0.5
+        self._load_images_btn.vertical_padding_em = 0
+        self._load_images_btn.set_on_clicked(self._load_image_click)
+
+        self._get_loaded_geometry_btn = gui.Button("PCD to TRIS")
+        self._get_loaded_geometry_btn.horizontal_padding_em = 0.5
+        self._get_loaded_geometry_btn.vertical_padding_em = 0
+        self._get_loaded_geometry_btn.set_on_clicked(self._get_loaded_geometry)
 
         self._arcball_button = gui.Button("Arcball")
         self._arcball_button.horizontal_padding_em = 0.5
@@ -78,7 +112,15 @@ class AppWindow:
         # as the first and last item. Stretch items take up as much space as
         # possible, and since there are two, they will each take half the extra
         # space, thus centering the buttons.
+        h2 = gui.Horiz(0.25 * em)
+        h2.add_stretch()
+        h2.add_child(self._load_images_btn)
+        h2.add_child(self._get_loaded_geometry_btn)
+        h2.add_stretch()
+        model_ctrls.add_child(h2)
+
         h = gui.Horiz(0.25 * em)  # row 1
+
         h.add_stretch()
         h.add_child(self._arcball_button)
         h.add_child(self._fly_button)
@@ -120,6 +162,8 @@ class AppWindow:
         view_ctrls.add_child(self._profiles)
         self._settings_panel.add_fixed(separation_height)
         self._settings_panel.add_child(view_ctrls)
+
+        self._model_settings_panel.add_child(model_ctrls)
 
         advanced = gui.CollapsableVert("Advanced lighting", 0,
                                        gui.Margins(em, 0, 0, 0))
@@ -219,6 +263,7 @@ class AppWindow:
         w.set_on_layout(self._on_layout)
         w.add_child(self._scene)
         w.add_child(self._settings_panel)
+        w.add_child(self._model_settings_panel)
 
         # ---- Menu ----
         # The menu is global (because the macOS menu is global), so only create
@@ -237,6 +282,9 @@ class AppWindow:
                 file_menu.add_separator()
                 file_menu.add_item("Quit", AppWindow.MENU_QUIT)
             settings_menu = gui.Menu()
+            settings_menu.add_item("Model Controls", AppWindow.MENU_SHOW_MODEL_SETTINGS)
+            settings_menu.set_checked(AppWindow.MENU_SHOW_MODEL_SETTINGS, True)
+
             settings_menu.add_item("Lighting & Materials",
                                    AppWindow.MENU_SHOW_SETTINGS)
             settings_menu.set_checked(AppWindow.MENU_SHOW_SETTINGS, True)
@@ -269,6 +317,8 @@ class AppWindow:
         w.set_on_menu_item_activated(AppWindow.MENU_QUIT, self._on_menu_quit)
         w.set_on_menu_item_activated(AppWindow.MENU_SHOW_SETTINGS,
                                      self._on_menu_toggle_settings_panel)
+        w.set_on_menu_item_activated(AppWindow.MENU_SHOW_MODEL_SETTINGS,
+                                     self._on_menu_toggle_model_settings_panel)
         w.set_on_menu_item_activated(AppWindow.MENU_ABOUT, self._on_menu_about)
         # ----
         w.set_on_menu_item_activated(AppWindow.MENU_IMAGE, self._on_menu_open_images)
@@ -285,8 +335,14 @@ class AppWindow:
             r.height,
             self._settings_panel.calc_preferred_size(
                 layout_context, gui.Widget.Constraints()).height)
+        height2 = min(
+            r.height,
+            self._model_settings_panel.calc_preferred_size(
+                layout_context, gui.Widget.Constraints()).height)
         self._settings_panel.frame = gui.Rect(r.get_right() - width, r.y, width,
                                               height)
+        self._model_settings_panel.frame = gui.Rect(0, r.y, width,
+                                                    height2)
 
     from mousemode import _set_mouse_mode_rotate
     from mousemode import _set_mouse_mode_fly
@@ -442,6 +498,11 @@ class AppWindow:
         self._settings_panel.visible = not self._settings_panel.visible
         gui.Application.instance.menubar.set_checked(
             AppWindow.MENU_SHOW_SETTINGS, self._settings_panel.visible)
+
+    def _on_menu_toggle_model_settings_panel(self):
+        self._settings_panel.visible = not self._settings_panel.visible
+        gui.Application.instance.menubar.set_checked(
+            AppWindow.MENU_SHOW_MODEL_SETTINGS, self._settings_panel.visible)
 
     def _on_menu_about(self):
         # Show a simple dialog. Although the Dialog is actually a widget, you can

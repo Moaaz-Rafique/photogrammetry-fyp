@@ -7,7 +7,7 @@ import os
 import platform
 import sys
 import glob
-from generateImagesFromModel import generateImages
+from generateImagesForModel import generateImages
 # from Settings import Settings
 
 class Settings():

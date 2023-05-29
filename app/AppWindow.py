@@ -34,18 +34,34 @@ class AppWindow:
             self._on_menu_open_images()
         except Exception as e:
             print(e)
+
     def _get_loaded_geometry(self):
         print("get Images")
         try:
             print(type(self._scene.scene))
             print(self._scene.scene.has_geometry('__model0__'))
-            if self._scene.scene.has_geometry('__model0__'):
+            if self._scene.scene.has_geometry('__model0__') or True:
+                pcd = o3d.io.read_point_cloud('D:\\fyp\\pdfs\\app\\output_ply\\points2.ply')
+                pcd.estimate_normals(
+                        search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+                try:
+                    pcd_down = pcd.voxel_down_sample(voxel_size=0.001)
+                    pcd_down.estimate_normals()
+                    mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd_down, .05)
+                    mesh.compute_vertex_normals()
+                    # o3d.visualization.draw_geometries([mesh])
+
+                    #
+                    self._scene.scene.add_geometry(f"__model1__", mesh.translate((.51,0,0)),
+                                                   self.settings.material)
+
+                except Exception as e:
+                    print(e)
                 print("found Model")
             else:
                 self.show_message_dialog("Error", "Not a valid model")
         except Exception as e:
             print(e)
-
 
     def __init__(self, width, height):
         self.settings = Settings()
@@ -53,7 +69,7 @@ class AppWindow:
         self.settings.new_ibl_name = resource_path + "/" + AppWindow.DEFAULT_IBL
 
         self.window = gui.Application.instance.create_window(
-            "Open3D", width, height)
+            "Photogrammetry", width, height)
         w = self.window  # to make the code more concise
 
         # 3D widget

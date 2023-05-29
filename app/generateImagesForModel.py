@@ -30,49 +30,49 @@ def loadImages(path):
 
     return loadedImages
 
-# model_type = "DPT_Large"     # MiDaS v3 - Large     (highest accuracy, slowest inference speed)
-# #model_type = "DPT_Hybrid"   # MiDaS v3 - Hybrid    (medium accuracy, medium inference speed)
-# #model_type = "MiDaS_small"  # MiDaS v2.1 - Small   (lowest accuracy, highest inference speed)
-#
-# model = torch.hub.load("intel-isl/MiDaS", model_type)
-# gpu_device = torch.device('cpu')
-# model.to(gpu_device)
-# model.eval()
-#
-# transform = torch.hub.load('intel-isl/MiDaS', 'transforms').dpt_transform
+model_type = "DPT_Large"     # MiDaS v3 - Large     (highest accuracy, slowest inference speed)
+#model_type = "DPT_Hybrid"   # MiDaS v3 - Hybrid    (medium accuracy, medium inference speed)
+#model_type = "MiDaS_small"  # MiDaS v2.1 - Small   (lowest accuracy, highest inference speed)
+
+model = torch.hub.load("intel-isl/MiDaS", model_type)
+gpu_device = torch.device('cpu')
+model.to(gpu_device)
+model.eval()
+
+transform = torch.hub.load('intel-isl/MiDaS', 'transforms').dpt_transform
 
 
-# def estimate_depth(image):
-    # transformed_image = transform(image).to(gpu_device)
-    # with torch.no_grad():
-    #     prediction = model(transformed_image)
-    #
-    #     prediction = torch.nn.functional.interpolate(
-    #         prediction.unsqueeze(1),
-    #         size=image.shape[:2],
-    #         mode="bicubic",
-    #         align_corners=False,
-    #     ).squeeze()
-    #
-    # output = prediction.cpu().numpy()
-    # return output
+def estimate_depth(image):
+    transformed_image = transform(image).to(gpu_device)
+    with torch.no_grad():
+        prediction = model(transformed_image)
+
+        prediction = torch.nn.functional.interpolate(
+            prediction.unsqueeze(1),
+            size=image.shape[:2],
+            mode="bicubic",
+            align_corners=False,
+        ).squeeze()
+
+    output = prediction.cpu().numpy()
+    return output
 
 
 
 
 def generateImages(path):
     print(path)
-    # selected_images = loadImages(path)
-    # print(f'loaded {len(selected_images)} in the current directory.')
+    selected_images = loadImages(path)
+    print(f'loaded {len(selected_images)} in the current directory.')
     pcds = []
-    for i in range(2):
-    #     # time.sleep(1)
+    for i in range(len(selected_images)):
+        # time.sleep(1)
         try:
-    #         image = np.array(selected_images[i])
-    #         output = estimate_depth(image)
-    #         # selected_images[i].save()
-    #         cv2.imwrite(f'{cwd}/output_color/{i}_color.png', cv2.cvtColor(selected_images[i], cv2.COLOR_RGB2BGR))
-    #         cv2.imwrite(f'{cwd}/output_depth/{i}_depth.png',cv2.cvtColor(output, cv2.COLOR_RGB2BGR))
+            image = np.array(selected_images[i])
+            output = estimate_depth(image)
+            # selected_images[i].save()
+            cv2.imwrite(f'{cwd}/output_color/{i}_color.png', cv2.cvtColor(selected_images[i], cv2.COLOR_RGB2BGR))
+            cv2.imwrite(f'{cwd}/output_depth/{i}_depth.png',cv2.cvtColor(output, cv2.COLOR_RGB2BGR))
             # out_img = Image.fromarray(output.astype('uint8'), 'L')
             # out_img.save(f'{cwd}/output_depth/{i}_depth.png')
             print(f"Output of image {i} generated")

@@ -25,7 +25,26 @@ def main():
 
     # Run the event loop. This will not return until the last window is closed.
     gui.Application.instance.run()
-
+def check_and_create_directories(dir_list):
+    for directory in dir_list:
+        try:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+                print(f"Directory '{directory}' created.")
+            else:
+                print(f"Directory '{directory}' already exists.")
+        except Exception as e:
+            print(e)
+# Example usage
 
 if __name__ == "__main__":
+    cwd = os.getcwd()
+    directories = [
+        cwd+'/output_color',
+        cwd + '/output_mesh',
+        cwd + '/output_ply',
+        cwd + '/output_depth',
+
+    ]
+    check_and_create_directories(directories)
     main()

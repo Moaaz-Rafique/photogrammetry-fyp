@@ -9,6 +9,8 @@ import sys
 import glob
 from generateImagesForModel import generateImages
 
+cwd = os.getcwd()
+
 
 def show_message_dialog(self, title, message):
     # A Dialog is just a widget, so you make its child a layout just like
@@ -46,9 +48,30 @@ def load_images(self, path):
     pcds = generateImages(path)
     try:
         self._scene.scene.clear_geometry()
-        for i in range(len(pcds)):
-            self._scene.scene.add_geometry(f"__model{i}__", pcds[i],
+        pcd_combined = o3d.geometry.PointCloud()
+        points = pcd_combined.points
+
+        for point_id in range(len(pcds)):
+            # pcds[point_id].transform(pose_graph.nodes[point_id].pose)
+            # pcd_combined.__add__(pcds[point_id])
+            points = np.concatenate((points, pcds[point_id].points))
+            pcd_combined.points = o3d.utility.Vector3dVector(points)
+            self._scene.scene.add_geometry(f"__model_{point_id}__", pcds[point_id],
+                                           self.settings.material)
+
+        pcd_combined_down = pcd_combined.voxel_down_sample(voxel_size=0.01)
+        # for i in range(len(pcds)):
+        self._scene.scene.add_geometry(f"__model_combined__", pcd_combined_down,
                                        self.settings.material)
+        try:
+            print(pcd_combined)
+
+            print(f"{cwd}/output_ply/points_combined.ply")
+            o3d.io.write_point_cloud(f"{cwd}/output_ply/points_combined.ply", pcd_combined)
+        except Exception as e:
+            print(e)
+        o3d.io.write_point_cloud(f"{cwd}/output_ply/points_combined_down.ply", pcd_combined_down)
+        # o3d.io.write_point_cloud(os.getcwd()+f"/output_ply/combinedDownSamplePoints{len(pcds)}.ply", pcd_combined_down)
     except Exception as e:
         print(e)
 

@@ -6,8 +6,9 @@ import open3d.visualization.rendering as rendering
 import os
 import platform
 import glob
-# from generateImagesFromModel import generateImages
 from Settings import Settings
+
+cwd = os.getcwd()
 
 isMacOS = (platform.system() == "Darwin")
 
@@ -37,29 +38,50 @@ class AppWindow:
 
     def _get_loaded_geometry(self):
         print("get Images")
+        cwd = os.getcwd()
+
         try:
             print(type(self._scene.scene))
             print(self._scene.scene.has_geometry('__model0__'))
             if self._scene.scene.has_geometry('__model0__') or True:
-                pcd = o3d.io.read_point_cloud('D:\\fyp\\pdfs\\app\\output_ply\\points2.ply')
+                pcd = o3d.io.read_point_cloud(f'{cwd}\\output_ply\\points_combined.ply')
                 pcd.estimate_normals(
                         search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
                 try:
-                    pcd_down = pcd.voxel_down_sample(voxel_size=0.001)
+                    pcd_down = pcd.voxel_down_sample(voxel_size=0.01)
                     pcd_down.estimate_normals()
-                    mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd_down, .05)
+                    mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd, .05)
                     mesh.compute_vertex_normals()
-                    # o3d.visualization.draw_geometries([mesh])
-
-                    #
-                    self._scene.scene.add_geometry(f"__model1__", mesh.translate((.51,0,0)),
+                    self._scene.scene.add_geometry(f"__model1__", mesh.translate((.0,0,0)),
                                                    self.settings.material)
-
+                    o3d.io.write_triangle_mesh(f'{cwd}/output_mesh/mesh1.gltf', mesh, print_progress=True)
+                    print(mesh)
                 except Exception as e:
                     print(e)
                 print("found Model")
             else:
                 self.show_message_dialog("Error", "Not a valid model")
+        except Exception as e:
+            print(e)
+
+    def _on_save_mesh_dialog_done(self, filename):
+        self.window.close_dialog()
+        try:
+            print(filename)
+            mesh = o3d.io.read_triangle_mesh(f'{cwd}/output_mesh/mesh1.gltf')
+            o3d.io.write_triangle_mesh(filename, mesh)
+        except Exception as e:
+            print(e)
+
+
+    def _save_geometry(self):
+        try:
+            dlg = gui.FileDialog(gui.FileDialog.SAVE, "Save the mesh",
+                             self.window.theme)
+            dlg.set_on_cancel(self._on_file_dialog_cancel)
+            dlg.set_on_done(self._on_save_mesh_dialog_done)
+            dlg.add_filter("", "All files")
+            self.window.show_dialog(dlg)
         except Exception as e:
             print(e)
 
@@ -102,6 +124,11 @@ class AppWindow:
         self._get_loaded_geometry_btn.vertical_padding_em = 0
         self._get_loaded_geometry_btn.set_on_clicked(self._get_loaded_geometry)
 
+        self._save_geometry_btn = gui.Button("Save geometry")
+        self._save_geometry_btn.horizontal_padding_em = 0.5
+        self._save_geometry_btn.vertical_padding_em = 0
+        self._save_geometry_btn.set_on_clicked(self._save_geometry)
+
         self._arcball_button = gui.Button("Arcball")
         self._arcball_button.horizontal_padding_em = 0.5
         self._arcball_button.vertical_padding_em = 0
@@ -131,7 +158,18 @@ class AppWindow:
         h2 = gui.Horiz(0.25 * em)
         h2.add_stretch()
         h2.add_child(self._load_images_btn)
+        h2.add_stretch()
+        model_ctrls.add_child(h2)
+
+        h2 = gui.Horiz(0.25 * em)
+        h2.add_stretch()
         h2.add_child(self._get_loaded_geometry_btn)
+        h2.add_stretch()
+        model_ctrls.add_child(h2)
+
+        h2 = gui.Horiz(0.25 * em)
+        h2.add_stretch()
+        h2.add_child(self._save_geometry_btn)
         h2.add_stretch()
         model_ctrls.add_child(h2)
 

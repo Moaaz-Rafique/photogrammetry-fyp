@@ -38,7 +38,6 @@ class AppWindow:
 
     def _get_loaded_geometry(self):
         print("get Images")
-        cwd = os.getcwd()
 
         try:
             print(type(self._scene.scene))

@@ -47,11 +47,12 @@ class AppWindow:
                 pcd.estimate_normals(
                         search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
                 try:
-                    pcd_down = pcd.voxel_down_sample(voxel_size=0.01)
+                    pcd_down = pcd.voxel_down_sample(voxel_size=0.001)
                     pcd_down.estimate_normals()
                     mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd, .05)
                     mesh.compute_vertex_normals()
-                    self._scene.scene.add_geometry(f"__model1__", mesh.translate((.0,0,0)),
+                    self._scene.scene.clear_geometry()
+                    self._scene.scene.add_geometry(f"__model1__", mesh,
                                                    self.settings.material)
                     o3d.io.write_triangle_mesh(f'{cwd}/output_mesh/mesh1.gltf', mesh, print_progress=True)
                     print(mesh)

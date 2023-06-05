@@ -54,23 +54,62 @@ def load_images(self, path):
         for point_id in range(len(pcds)):
             # pcds[point_id].transform(pose_graph.nodes[point_id].pose)
             # pcd_combined.__add__(pcds[point_id])
-            points = np.concatenate((points, pcds[point_id].points))
+            pcd = pcds[point_id]
+
+            _points = np.asarray(pcd.points)
+            colors = np.asarray(pcd.colors)
+
+            # Calculate the grayscale intensity of each color (assuming RGB colors)
+            intensities = np.mean(colors, axis=1)
+
+            # Filter out points with black color (intensity close to 0)
+            black_filter = intensities > 0.1  # Adjust the threshold as needed
+
+            # Apply the color filter to the point cloud
+            filtered_points = _points[black_filter]
+            filtered_colors = colors[black_filter]
+
+            # Create a new point cloud with the filtered points and colors
+            filtered_pcd = o3d.geometry.PointCloud()
+            filtered_pcd.points = o3d.utility.Vector3dVector(filtered_points)
+            filtered_pcd.colors = o3d.utility.Vector3dVector(filtered_colors)
+            # Visualize the filtered point cloud
+            uni_down_pcd = filtered_pcd.voxel_down_sample(.001
+                                                          ).uniform_down_sample(every_k_points=15)
+            # print("Statistical outlier removal")
+            cl2, ind2 = uni_down_pcd.remove_radius_outlier(nb_points=16, radius=0.5)
+            cl, ind = cl2.remove_statistical_outlier(nb_neighbors=16,
+                                                     std_ratio=2.0)
+
+            points = np.concatenate((points, cl.points))
             pcd_combined.points = o3d.utility.Vector3dVector(points)
-            self._scene.scene.add_geometry(f"__model_{point_id}__", pcds[point_id],
+            o3d.io.write_point_cloud(f"{cwd}/output_ply/point{point_id}_filtered.ply", cl)
+            print(f'filtered points{point_id}')
+
+            self._scene.scene.add_geometry(f"__model_{point_id}__", cl,
                                            self.settings.material)
 
         pcd_combined_down = pcd_combined.voxel_down_sample(voxel_size=0.01)
-        # for i in range(len(pcds)):
-        self._scene.scene.add_geometry(f"__model_combined__", pcd_combined_down,
+        s_points = np.asarray(pcd_combined.points)
+
+        # Scale the z-axis coordinates
+        scale_factor = 10  # Adjust the scale factor as needed
+        scaled_points = np.copy(s_points)
+        scaled_points[:, 2] *= scale_factor
+
+        # Create a new point cloud with the scaled points
+        scaled_pcd = o3d.geometry.PointCloud()
+        scaled_pcd.points = o3d.utility.Vector3dVector(scaled_points)
+
+        self._scene.scene.add_geometry(f"__model_combined__", scaled_pcd,
                                        self.settings.material)
         try:
             print(pcd_combined)
-
             print(f"{cwd}/output_ply/points_combined.ply")
             o3d.io.write_point_cloud(f"{cwd}/output_ply/points_combined.ply", pcd_combined)
         except Exception as e:
             print(e)
-        o3d.io.write_point_cloud(f"{cwd}/output_ply/points_combined_down.ply", pcd_combined_down)
+        o3d.io.write_point_cloud(f"{cwd}/output_ply/points_combined_down.ply", scaled_points)
         # o3d.io.write_point_cloud(os.getcwd()+f"/output_ply/combinedDownSamplePoints{len(pcds)}.ply", pcd_combined_down)
     except Exception as e:
         print(e)

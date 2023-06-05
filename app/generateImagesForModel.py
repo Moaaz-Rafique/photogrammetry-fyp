@@ -22,8 +22,8 @@ def loadImages(path):
         print('loading images', path + '/' + image)
         try:
             img = Image.open(path + '/' + image)
-            img = cv2.imread(path + '/' + image)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # img = cv2.imread(path + '/' + image)
+            # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             loadedImages.append(img)
         except Exception as e:
             print(e)
@@ -71,10 +71,12 @@ def generateImages(path):
             image = np.array(selected_images[i])
             output = estimate_depth(image)
             # selected_images[i].save()
-            cv2.imwrite(f'{cwd}/output_color/{i}_color.png', cv2.cvtColor(selected_images[i], cv2.COLOR_RGB2BGR))
-            cv2.imwrite(f'{cwd}/output_depth/{i}_depth.png',cv2.cvtColor(output, cv2.COLOR_RGB2BGR))
-            # out_img = Image.fromarray(output.astype('uint8'), 'L')
-            # out_img.save(f'{cwd}/output_depth/{i}_depth.png')
+            Image.fromarray(image.astype('uint8'), 'RGB').save(f'{cwd}/output_color/{i}_color.png')
+            out_img = Image.fromarray(output.astype('uint8'), 'L')
+            out_img.save(f'{cwd}/output_depth/{i}_depth.png')
+
+            # cv2.imwrite(f'{cwd}/output_color/{i}_color.png', cv2.cvtColor(selected_images[i], cv2.COLOR_RGB2BGR))
+            # cv2.imwrite(f'{cwd}/output_depth/{i}_depth.png',cv2.cvtColor(output, cv2.COLOR_RGB2BGR))
             print(f"Output of image {i} generated")
             pcds.append(generatePlyFromIndex(i, cwd))
 
